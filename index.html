@@ -198,6 +198,15 @@ body.app .phone{width:100%;padding:0;border-radius:0;background:transparent}
 body.app .screen{width:100%;height:100vh;height:100dvh;border-radius:0}
 body.app .capt{display:none}
 body.app [data-go],body.app [data-back]{cursor:pointer}
+
+/* ---------- 测试模式（?test：大屏中间一部可点的手机，给眼动/可用性测试用） ---------- */
+body.test{padding:0;height:100vh;overflow:hidden;display:grid;place-items:center}
+body.test .board-head,body.test .capt{display:none}
+body.test .row{display:block;max-width:none;margin:0}
+body.test .shot{display:none}
+body.test .shot.active{display:block}
+body.test [data-go],body.test [data-back]{cursor:pointer}
+body.test .shot.active.enter .screen{animation:slide .28s cubic-bezier(.2,.8,.2,1)}
 </style>
 </head>
 <body>
@@ -453,7 +462,9 @@ body.app [data-go],body.app [data-back]{cursor:pointer}
   var mq = window.matchMedia('(max-width: 760px)');
   var shots = [].slice.call(document.querySelectorAll('.shot'));
   var stack = [];
-  function app(){ return document.body.classList.contains('app'); }
+  var test = /[?&]test\b/.test(location.search);
+  function app(){ return document.body.classList.contains('app') || test; }
+  function fit(){ var r = document.querySelector('.row'); if (r) r.style.zoom = Math.min((innerHeight - 40) / 828, (innerWidth - 40) / 391); }
   function show(id, push){
     var el = document.getElementById(id); if (!el) return;
     var cur = document.querySelector('.shot.active');
@@ -464,7 +475,9 @@ body.app [data-go],body.app [data-back]{cursor:pointer}
   }
   function sync(){
     document.body.classList.toggle('app', mq.matches);
-    if (mq.matches){
+    document.body.classList.toggle('test', test && !mq.matches);
+    if (test && !mq.matches) fit();
+    if (mq.matches || test){
       var start = (location.hash || '').slice(1);
       if (!document.getElementById(start)) start = 's1';
       stack = []; shots.forEach(function(s){ s.classList.remove('active'); });
@@ -492,6 +505,7 @@ body.app [data-go],body.app [data-back]{cursor:pointer}
     if (e.target.closest('[data-back]')){ e.preventDefault(); show(stack.pop() || 's2', false); }
   });
   if (mq.addEventListener) mq.addEventListener('change', sync); else mq.addListener(sync);
+  if (test) addEventListener('resize', fit);
   sync();
 })();
 </script>
